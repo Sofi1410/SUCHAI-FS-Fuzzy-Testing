@@ -9,7 +9,7 @@ import pandas as pd
 import json
 import time
 import argparse
-
+import numpy as np
 
 def to_json(information, iterations, t, json_path):
     """
@@ -114,24 +114,45 @@ def run_experiment(random_fuzzer, iterations=10, cmds_number=10, csv_path='', js
     # Run zmqhub.py (ipc)
     # ex_zmqhub = Popen(["python3", "zmqhub.py", "--ip", "/tmp/suchaifs", "--proto", "ipc"], stdin=PIPE)
     # Run zmqhub.py (tcp)
-    
-    ex_zmqhub = Popen(["python3", "zmqhub.py", "--mon", "-i", "80000", "-o", "80001","-m", "80002"], stdin=PIPE)
-    print(os.path)
-    exec_dir = "../SUCHAI-Flight-Software/build/apps/simple/"
-    exec_cmd = "./suchai-app"  #aca le doy el nombre del ejecutable
-    # Run flight software sending n_cmds random commands with 1 random parameter
-    prev_dir = os.getcwd()
-    os.chdir(exec_dir)
-    start_time = time.strftime("%Y%m%d-%H%M%S")  # Measure start time to include it in the report name
-    outcomes = random_fuzzer.runs(FlightSoftwareRunner(exec_cmd=exec_cmd), iterations)
-    os.chdir(prev_dir)
-    ex_zmqhub.kill()
+    ex_zmqhub=None
+    try:
+        ex_zmqhub = Popen(["python3", "zmqhub.py", "--mon", "-i", "8002", "-o", "8001","-m", "80002"], stdin=PIPE)
+        print(os.path)
+        exec_dir = "../SUCHAI-Flight-Software/build/apps/simple/"
+        exec_cmd = "./suchai-app"  #aca le doy el nombre del ejecutable
+        # Run flight software sending n_cmds random commands with 1 random parameter
+        prev_dir = os.getcwd()
+        os.chdir(exec_dir)
+        start_time = time.strftime("%Y%m%d-%H%M%S")  # Measure start time to include it in the report name
+        outcomes = random_fuzzer.runs(FlightSoftwareRunner(exec_cmd=exec_cmd), iterations)
+        os.chdir(prev_dir)
+    except KeyboardInterrupt:
+        pass
+
+    finally:
+        ex_zmqhub.kill()
     # Write outcome information report
+
+    # TODO revisar outcomes y buscar por 0s en las tuplas
+    #el payload es : mds_list, params_list, executed_cmds, results, cmds_time, return_code, total_exec_time, rm, vm
+    #nos interesa return code   
+
+
+
     to_json(outcomes, iterations, start_time, json_path)
 
     # Write report to csv file
     to_csv_file(outcomes, iterations, start_time, csv_path)
     # Set variables
+    print("OUTCOME -")
+    #print(outcomes)
+    print("OUTCOME -> RETURN_VALUE")
+    result=[]
+    for seq in outcomes:
+        print(seq[5])
+        result.append(seq[5])
+    final=np.array(result)
+    return not final.all()          #arroja FALSE si al menos 1 es 0
         
 
      
@@ -189,6 +210,7 @@ def main(time_path, csv_path, json_path, iterations, commands_number, min_length
     f = open(time_path + 'exec_time-' + curr_time + '.txt', '+w')
     f.close()
 
+    return_list=[]
     # Run experiment and add execution time of each iteration to time reports
     for num_cmds in commands_number:
 
@@ -198,9 +220,10 @@ def main(time_path, csv_path, json_path, iterations, commands_number, min_length
 
         for iter in iterations:
             exec_start_time = time.time()
-            run_experiment(fuzzer, int(iter), int(num_cmds), csv_path, json_path)
+            return_list.append(run_experiment(fuzzer, int(iter), int(num_cmds), csv_path, json_path))
             with open(time_path + 'exec_time-' + curr_time + '.txt', 'a') as f:
                 f.write("%s\n" % (time.time() - exec_start_time))
+    return return_list
 
 
 if __name__ == "__main__":
@@ -209,7 +232,10 @@ if __name__ == "__main__":
                                1: RandomSequenceFuzzer,
                                2: RandomSequenceFuzzerWithFixedParams,
                                3: RandomSequenceFuzzerWithFixedParamsAndExactTypes}
-    main(args.time_path, args.csv_path, args.json_path, args.iterations, args.commands_number, args.min_length, args.max_length, args.char_start, args.char_range, strategies_fuzz_classes[args.strategy], args.commands_file)
+    return_codes=main(args.time_path, args.csv_path, args.json_path, args.iterations, args.commands_number, args.min_length, args.max_length, args.char_start, args.char_range, strategies_fuzz_classes[args.strategy], args.commands_file)
+    print(return_codes)
+    result=np.array(return_codes)
+    exit(not result.all())  #true if all values are 0
 
 
 
