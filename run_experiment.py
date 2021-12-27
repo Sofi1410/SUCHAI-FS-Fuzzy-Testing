@@ -149,8 +149,10 @@ def run_experiment(random_fuzzer, iterations=10, cmds_number=10, csv_path='', js
     print("OUTCOME -> RETURN_VALUE")
     result=[]
     for seq in outcomes:
+        print("SECUENCIA :")
         print(seq[5])
         result.append(seq[5])
+    print("RESULTADO :", result )
     final=np.array(result)
     return not final.all()          #.all() arroja FALSE si al menos 1 es 0
         
