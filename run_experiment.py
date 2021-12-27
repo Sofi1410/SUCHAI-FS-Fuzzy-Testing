@@ -152,7 +152,7 @@ def run_experiment(random_fuzzer, iterations=10, cmds_number=10, csv_path='', js
         print(seq[5])
         result.append(seq[5])
     final=np.array(result)
-    return not final.all()          #arroja FALSE si al menos 1 es 0
+    return not final.all()          #.all() arroja FALSE si al menos 1 es 0
         
 
      
@@ -233,9 +233,11 @@ if __name__ == "__main__":
                                2: RandomSequenceFuzzerWithFixedParams,
                                3: RandomSequenceFuzzerWithFixedParamsAndExactTypes}
     return_codes=main(args.time_path, args.csv_path, args.json_path, args.iterations, args.commands_number, args.min_length, args.max_length, args.char_start, args.char_range, strategies_fuzz_classes[args.strategy], args.commands_file)
-    print(return_codes)
+    print("RETURN CODES: ", return_codes)
+    print("AAAAA", return_codes)
     result=np.array(return_codes)
-    exit(not result.all())  #true if all values are 0
+    print("RESULTADO TEST: ", result.all())
+    exit(result.all())  #true if all values are 0
 
 
 
