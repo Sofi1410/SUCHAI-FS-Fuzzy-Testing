@@ -133,28 +133,28 @@ def run_experiment(random_fuzzer, iterations=10, cmds_number=10, csv_path='', js
         ex_zmqhub.kill()
     # Write outcome information report
 
-    # TODO revisar outcomes y buscar por 0s en las tuplas
+    # TODO revisar outcomes y buscar por 1s en las tuplas
     #el payload es : mds_list, params_list, executed_cmds, results, cmds_time, return_code, total_exec_time, rm, vm
     #nos interesa return code   
-
-
-
+    
     to_json(outcomes, iterations, start_time, json_path)
 
     # Write report to csv file
     to_csv_file(outcomes, iterations, start_time, csv_path)
     # Set variables
-    print("OUTCOME -")
+
     #print(outcomes)
-    print("OUTCOME -> RETURN_VALUE")
+
     result=[]
     for seq in outcomes:
-        print("SECUENCIA :")
-        print(seq[5])
-        result.append(seq[5])
-    print("RESULTADO :", result )
-    final=np.array(result)
-    return not final.all()          #.all() arroja FALSE si al menos 1 es 0
+        if seq[5]==1:
+            exit_code=False
+        else:
+            exit_code=True
+        result.append([seq[0], seq[1],exit_code])
+
+    return result        #.all() arroja FALSE si al menos 1 es 0
+    
         
 
      
@@ -227,6 +227,21 @@ def main(time_path, csv_path, json_path, iterations, commands_number, min_length
                 f.write("%s\n" % (time.time() - exec_start_time))
     return return_list
 
+def print_cmds(return_list):
+    print("-------------- TEST RESULTS --------------")
+    for j in range(len(return_list)):
+        print("-------- ITERATION ",j+1," --------")
+        it=return_list[j]
+        print("RESULT: ","correct behavior" if it[2] else "ERROR")
+        for i in range(len(it[0])):
+            print( "COMAND: ", it[0][i])
+            print("PARAMS: ", it[1][i])
+
+def check_return_codes(return_list):
+    for it in return_list:
+        if it[2]==False:
+            return it[2]
+    return True
 
 if __name__ == "__main__":
     args = get_parameters()
@@ -234,12 +249,11 @@ if __name__ == "__main__":
                                1: RandomSequenceFuzzer,
                                2: RandomSequenceFuzzerWithFixedParams,
                                3: RandomSequenceFuzzerWithFixedParamsAndExactTypes}
+    
     return_codes=main(args.time_path, args.csv_path, args.json_path, args.iterations, args.commands_number, args.min_length, args.max_length, args.char_start, args.char_range, strategies_fuzz_classes[args.strategy], args.commands_file)
-    print("RETURN CODES: ", return_codes)
-    print("AAAAA", return_codes)
-    result=np.array(return_codes)
-    print("RESULTADO TEST: ", result.all())
-    exit(result.all())  #true if all values are 0
+    #print("RAW: ",return_codes[0])
+    print_cmds(return_codes[0])
+    exit(check_return_codes(return_codes[0]))
 
 
 
