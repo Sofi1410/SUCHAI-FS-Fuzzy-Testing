@@ -10,6 +10,7 @@ import json
 import time
 import argparse
 import numpy as np
+import time
 
 def to_json(information, iterations, t, json_path):
     """
@@ -236,6 +237,7 @@ def print_cmds(return_list):
         for i in range(len(it[0])):
             print( "COMAND: ", it[0][i])
             print("PARAMS: ", it[1][i])
+        print("")
 
 def check_return_codes(return_list):
     for it in return_list:
@@ -244,6 +246,7 @@ def check_return_codes(return_list):
     return True
 
 if __name__ == "__main__":
+    start = time.perf_counter()
     args = get_parameters()
     strategies_fuzz_classes = {0: RandomCommandsSequenceFuzzer,
                                1: RandomSequenceFuzzer,
@@ -253,6 +256,8 @@ if __name__ == "__main__":
     return_codes=main(args.time_path, args.csv_path, args.json_path, args.iterations, args.commands_number, args.min_length, args.max_length, args.char_start, args.char_range, strategies_fuzz_classes[args.strategy], args.commands_file)
     #print("RAW: ",return_codes[0])
     print_cmds(return_codes[0])
+    elapsed_time = time.perf_counter() - start
+    print("--------  Tiempo Ejecución : {:.2f} s".format(elapsed_time) )
     exit(check_return_codes(return_codes[0]))
 
 
