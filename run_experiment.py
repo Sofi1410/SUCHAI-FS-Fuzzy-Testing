@@ -258,7 +258,8 @@ if __name__ == "__main__":
     print_cmds(return_codes[0])
     elapsed_time = time.perf_counter() - start
     print("--------  Tiempo Ejecución : {:.2f} s".format(elapsed_time) )
-    exit(check_return_codes(return_codes[0]))
+    salida=check_return_codes(return_codes[0])
+    exit(not salida)
 
 
 
